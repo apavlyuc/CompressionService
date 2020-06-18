@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <cstring> // memcpy, memset
-#include <string_view>
 
 namespace {
 	enum class RequestType
@@ -13,25 +12,16 @@ namespace {
 		compress = 4
 	};
 
-	std::string	get_header_for_msg(RequestType type, std::string const& msg = "")
+	const std::size_t g_header_size = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint16_t);
+
+	void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0)
 	{
 		const uint32_t magic_value = 0x53545259;
-		const uint16_t payload_length = msg.size();
 		const uint16_t request_code = static_cast<uint16_t>(type);
 
-		const std::size_t size_to_allocate = sizeof(magic_value) + sizeof(payload_length) + sizeof(request_code) + 1;
-
-		char *header = new char(size_to_allocate);
-		std::memset((void *)header, 0, size_to_allocate);
-
-		std::memcpy((void *)header, (void *)&magic_value, 4);
-		std::memcpy((void *)(header + 4), (void *)&payload_length, 2);
-		std::memcpy((void *)(header + 6), (void *)&request_code, 2);
-
-		std::string_view view(header, 6);
-
-		//delete header;
-		return std::string{view};
+		std::memcpy(dst, (void *)&magic_value, 4);
+		std::memcpy((void *)((char *)dst + 4), (void *)&payload_length, 2);
+		std::memcpy((void *)((char *)dst + 6), (void *)&request_code, 2);
 	}
 } // namespace
 
@@ -46,27 +36,48 @@ void Client::connect(boost::asio::ip::tcp::endpoint const& address)
 
 void Client::send_compress_request(std::string const& msg_to_compress)
 {
-	std::string const& msg_header = get_header_for_msg(RequestType::compress, msg_to_compress);
+	std::size_t msg_size = g_header_size + msg_to_compress.size();
+	char *msg = new char[msg_size];
 
-	std::cout << "header size: " << msg_header.size() << std::endl;
-	std::cout << "msg size: " << msg_to_compress.size() << std::endl;
+	insert_header(msg, RequestType::compress, msg_to_compress.size());
+	std::memcpy(msg + g_header_size, (void const*)msg_to_compress.data(), msg_to_compress.size());
 
-	_send_msg(msg_header + msg_to_compress);
+	_send_msg(msg, msg_size);
+
+	delete[] msg;
 }
 
 void Client::send_get_stats_request()
 {
-	_send_msg(get_header_for_msg(RequestType::get_stats));
+	char *msg = new char[g_header_size];
+
+	insert_header(msg, RequestType::get_stats);
+
+	_send_msg(msg, g_header_size);
+
+	delete[] msg;
 }
 
 void Client::send_ping_request()
 {
-	_send_msg(get_header_for_msg(RequestType::ping));
+	char *msg = new char[g_header_size];
+
+	insert_header(msg, RequestType::ping);
+
+	_send_msg(msg, g_header_size);
+
+	delete[] msg;
 }
 
 void Client::send_reset_stats_request()
 {
-	_send_msg(get_header_for_msg(RequestType::reset_stats));
+	char *msg = new char[g_header_size];
+
+	insert_header(msg, RequestType::reset_stats);
+
+	_send_msg(msg, g_header_size);
+
+	delete[] msg;
 }
 
 std::string Client::receive_msg()
@@ -82,11 +93,9 @@ std::string Client::receive_msg()
 **	private methods
 */
 
-void	Client::_send_msg(std::string const& msg)
+void	Client::_send_msg(char const* data, std::size_t len)
 {
-	std::cout << "total msg size: " << msg.size() << std::endl;
-
-	_sock.write_some(boost::asio::buffer(msg, msg.size()));
+	_sock.write_some(boost::asio::buffer(data, len));
 }
 
 std::string Client::_get_server_responce()
