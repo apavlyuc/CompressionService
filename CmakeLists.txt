@@ -1,0 +1,11 @@
+message(STATUS "in ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
+
+cmake_minimum_required(VERSION 3.16)
+
+project(CompressionService)
+
+set(CMAKE_CXX_STANDARD 17)
+message("set CMAKE_CXX_STANDARD to ${CMAKE_CXX_STANDARD}")
+
+add_subdirectory(client)
+add_subdirectory(server)
