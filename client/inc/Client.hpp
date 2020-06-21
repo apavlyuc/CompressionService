@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Default.hpp>
+
 #include <boost/asio.hpp>
 
 #include <string>
@@ -7,7 +9,7 @@
 class Client
 {
 public:
-	Client() : _sock(_context) {}
+	Client() : _m_sock(_m_context) {}
 
 	void	connect(boost::asio::ip::tcp::endpoint const& address);
 
@@ -21,6 +23,8 @@ private:
 	void		_send_msg(char const* data, std::size_t len);
 	std::string	_get_server_responce();
 
-	boost::asio::io_context _context;
-	boost::asio::ip::tcp::socket _sock;
+	protocol::Default _m_protocol;
+
+	boost::asio::io_context _m_context;
+	boost::asio::ip::tcp::socket _m_sock;
 };

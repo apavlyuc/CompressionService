@@ -1,29 +1,8 @@
-#include "Client.hpp"
+#include <Client.hpp>
+#include <Default.hpp>
 
 #include <iostream>
 #include <cstring> // memcpy, memset
-
-namespace {
-	enum class RequestType
-	{
-		ping = 1,
-		get_stats = 2,
-		reset_stats = 3,
-		compress = 4
-	};
-
-	const std::size_t g_header_size = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint16_t);
-
-	void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0)
-	{
-		const uint32_t magic_value = 0x53545259;
-		const uint16_t request_code = static_cast<uint16_t>(type);
-
-		std::memcpy(dst, (void *)&magic_value, 4);
-		std::memcpy((void *)((char *)dst + 4), (void *)&payload_length, 2);
-		std::memcpy((void *)((char *)dst + 6), (void *)&request_code, 2);
-	}
-} // namespace
 
 /*
 **	public methods
@@ -31,16 +10,20 @@ namespace {
 
 void Client::connect(boost::asio::ip::tcp::endpoint const& address)
 {
-	_sock.connect(address);
+	_m_sock.connect(address);
 }
 
 void Client::send_compress_request(std::string const& msg_to_compress)
 {
-	std::size_t msg_size = g_header_size + msg_to_compress.size();
+	const std::size_t header_len = _m_protocol.get_header_length();
+	const std::size_t payload_len = msg_to_compress.size();
+
+	const std::size_t msg_size = header_len + payload_len;
+
 	char *msg = new char[msg_size];
 
-	insert_header(msg, RequestType::compress, msg_to_compress.size());
-	std::memcpy(msg + g_header_size, (void const*)msg_to_compress.data(), msg_to_compress.size());
+	_m_protocol.insert_header((void *)msg, protocol::Default::RequestType::compress, payload_len);
+	std::memcpy(msg + header_len, (void const*)msg_to_compress.data(), payload_len);
 
 	_send_msg(msg, msg_size);
 
@@ -49,33 +32,39 @@ void Client::send_compress_request(std::string const& msg_to_compress)
 
 void Client::send_get_stats_request()
 {
-	char *msg = new char[g_header_size];
+	const std::size_t header_len = _m_protocol.get_header_length();
 
-	insert_header(msg, RequestType::get_stats);
+	char *msg = new char[header_len];
 
-	_send_msg(msg, g_header_size);
+	_m_protocol.insert_header((void *)msg, protocol::Default::RequestType::get_stats);
+
+	_send_msg(msg, header_len);
 
 	delete[] msg;
 }
 
 void Client::send_ping_request()
 {
-	char *msg = new char[g_header_size];
+	const std::size_t header_len = _m_protocol.get_header_length();
 
-	insert_header(msg, RequestType::ping);
+	char *msg = new char[header_len];
 
-	_send_msg(msg, g_header_size);
+	_m_protocol.insert_header((void *)msg, protocol::Default::RequestType::ping);
+
+	_send_msg(msg, header_len);
 
 	delete[] msg;
 }
 
 void Client::send_reset_stats_request()
 {
-	char *msg = new char[g_header_size];
+	const std::size_t header_len = _m_protocol.get_header_length();
 
-	insert_header(msg, RequestType::reset_stats);
+	char *msg = new char[header_len];
 
-	_send_msg(msg, g_header_size);
+	_m_protocol.insert_header((void *)msg, protocol::Default::RequestType::reset_stats);
+
+	_send_msg(msg, header_len);
 
 	delete[] msg;
 }
@@ -95,7 +84,7 @@ std::string Client::receive_msg()
 
 void	Client::_send_msg(char const* data, std::size_t len)
 {
-	_sock.write_some(boost::asio::buffer(data, len));
+	_m_sock.write_some(boost::asio::buffer(data, len));
 }
 
 std::string Client::_get_server_responce()
@@ -105,7 +94,7 @@ std::string Client::_get_server_responce()
 	try {
 		char buff[1024]{};
 
-		std::size_t len = _sock.read_some(boost::asio::buffer(buff));
+		std::size_t len = _m_sock.read_some(boost::asio::buffer(buff));
 		responce = buff;
 	} catch (std::exception e)
 	{
