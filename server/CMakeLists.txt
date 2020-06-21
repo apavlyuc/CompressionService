@@ -33,9 +33,14 @@ find_package(Boost 1.73 REQUIRED
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SRC_FILES)
 
 add_executable(${TARGET_NAME} ${SRC_FILES})
+
+set(PROTOCOL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../protocol/inc)
+message("set PROTOCOL_INCLUDE_DIRS to ${PROTOCOL_INCLUDE_DIRS}")
+
 target_include_directories(${TARGET_NAME}
 	PRIVATE
 		${Boost_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/inc
+		${PROTOCOL_INCLUDE_DIRS}
 )
-target_link_libraries(${TARGET_NAME} ${MINGW_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(${TARGET_NAME} ${MINGW_LIBS} ${Boost_LIBRARIES} "protocol")

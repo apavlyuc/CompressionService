@@ -26,18 +26,24 @@ void Server::listen(boost::asio::ip::tcp::endpoint const& addr)
 
 void Server::_client_session(socket_shared_ptr sock)
 {
+	const std::size_t header_len = _m_protocol.get_header_length();
+
 	try {
-		std::string data;
 		while (true)
 		{
-			data.resize(512);
-			size_t len = sock->read_some(boost::asio::buffer(data));
-			if (len > 0)
-			{
-				boost::asio::write(*sock, boost::asio::buffer("ok", 5));
-			}
-			data.resize(len);
-			std::cout << "msg from client: " << data << std::endl;
+			char *header = new char[header_len];
+			boost::asio::read(*sock, boost::asio::buffer(header, header_len));
+
+			const std::size_t payload_length = _m_protocol.get_payload_length(header, header_len);
+			std::cout << "payload length: " << payload_length << std::endl;
+			char *payload = new char[payload_length];
+			boost::asio::read(*sock, boost::asio::buffer(payload, payload_length));
+			std::cout << "payload: [" << std::string(payload, payload_length) << "]" << std::endl;
+
+			boost::asio::write(*sock, boost::asio::buffer(payload, payload_length));
+
+			delete[] header;
+			delete[] payload;
 		}
 	} catch (std::exception const& e)
 	{
