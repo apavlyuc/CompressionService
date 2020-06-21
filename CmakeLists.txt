@@ -7,5 +7,6 @@ project(CompressionService)
 set(CMAKE_CXX_STANDARD 17)
 message("set CMAKE_CXX_STANDARD to ${CMAKE_CXX_STANDARD}")
 
+add_subdirectory(protocol)
 add_subdirectory(client)
 add_subdirectory(server)
