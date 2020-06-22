@@ -34,10 +34,10 @@ void Server::_client_session(socket_shared_ptr sock)
 			char *header = new char[header_len];
 			boost::asio::read(*sock, boost::asio::buffer(header, header_len));
 
-			const std::size_t payload_length = _m_protocol.get_payload_length(header, header_len);
-			std::cout << "payload length: " << payload_length << std::endl;
+			const std::size_t payload_length = _m_protocol.get_payload_length(header);
 			char *payload = new char[payload_length];
 			boost::asio::read(*sock, boost::asio::buffer(payload, payload_length));
+
 			std::cout << "payload: [" << std::string(payload, payload_length) << "]" << std::endl;
 
 			boost::asio::write(*sock, boost::asio::buffer(payload, payload_length));
