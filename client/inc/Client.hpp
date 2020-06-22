@@ -20,6 +20,7 @@ public:
 
 	std::string	receive_msg();
 private:
+	void		_perform_request(protocol::Default::RequestType type, std::string const& payload = "");
 	void		_send_msg(char const* data, std::size_t len);
 	std::string	_get_server_responce();
 
