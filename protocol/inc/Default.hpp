@@ -4,6 +4,14 @@
 
 namespace protocol {
 
+	/*
+	**	protocol:	Default
+	**
+	**	structure:	magic_number + payload_len + request_code
+	**		magic_number:	uint32_t, always equal to 0x53545259
+	**		payload_len:	uint16_t
+	**		request_code:	uint16_t
+	*/
 	class Default
 	{
 		static const std::size_t _header_length{8};
