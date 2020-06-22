@@ -26,9 +26,11 @@ namespace protocol {
 		};
 
 		inline std::size_t get_header_length() const { return Default::_header_length; }
-		std::size_t get_payload_length(char const* header, std::size_t size) const;
+		std::size_t get_payload_length(char const* header) const;
+		RequestType get_request_type(char const* header) const;
 
-		void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0);
+		void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0) const;
+		void	insert_payload(void *dst, void const* src, std::size_t src_len) const;
 	protected:
 		inline std::size_t get_offset_to_payload_length_field() const { return Default::_offset_to_payload_length_field; }
 	};
