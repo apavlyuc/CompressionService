@@ -24,8 +24,6 @@ private:
 	void		_send_msg(char const* data, std::size_t len);
 	std::string	_get_server_responce();
 
-	protocol::Default _m_protocol;
-
 	boost::asio::io_context _m_context;
 	boost::asio::ip::tcp::socket _m_sock;
 };
