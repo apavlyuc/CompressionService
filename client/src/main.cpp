@@ -25,6 +25,11 @@ int		main(int ac, char **av)
 		{
 			std::getline(std::cin, line);
 
+			if (line.empty())
+			{
+				continue;
+			}
+
 			client.send_compress_request(line);
 			answer_from_server = client.receive_msg();
 
