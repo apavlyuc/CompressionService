@@ -26,8 +26,6 @@ void Server::listen(boost::asio::ip::tcp::endpoint const& addr)
 
 void Server::_client_session(socket_shared_ptr sock)
 {
-	const std::size_t header_len = _m_protocol.get_header_length();
-
 	std::size_t msg_compressed_count = 0;
 
 	char *header = nullptr;
@@ -35,11 +33,11 @@ void Server::_client_session(socket_shared_ptr sock)
 	try {
 		while (true)
 		{
-			header = new char[header_len];
-			boost::asio::read(*sock, boost::asio::buffer(header, header_len));
+			header = new char[protocol::Default::header_len];
+			boost::asio::read(*sock, boost::asio::buffer(header, protocol::Default::header_len));
 
-			const protocol::Default::RequestType type = _m_protocol.get_request_type(header);
-			const std::size_t payload_length = _m_protocol.get_payload_length(header);
+			const protocol::Default::RequestType type = protocol::Default::get_request_type(header);
+			const std::size_t payload_length = protocol::Default::get_payload_length(header);
 
 			switch (type)
 			{
@@ -119,7 +117,7 @@ void Server::_handle_reset_stats_responce(socket_shared_ptr sock)
 
 void Server::_send_responce(socket_shared_ptr sock, protocol::Default::StatusCode code, char const* payload, std::size_t payload_len)
 {
-	const std::size_t msg_len = protocol::Default::get_header_length() + payload_len;
+	const std::size_t msg_len = protocol::Default::header_len + payload_len;
 	char *msg = new char[msg_len];
 
 	protocol::Default::insert_header((void *)msg, code, payload_len);

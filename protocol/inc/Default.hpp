@@ -12,7 +12,7 @@ namespace protocol {
 	**		payload_len:	uint16_t
 	**		request_code:	uint16_t
 	*/
-	struct Default
+	namespace Default
 	{
 		enum class RequestType
 		{
@@ -30,19 +30,15 @@ namespace protocol {
 			unsupported_request_type = 3
 		};
 
-		static inline std::size_t get_header_length() { return Default::_header_length; }
-		static std::size_t get_payload_length(char const* header);
-		static RequestType get_request_type(char const* header);
-		static StatusCode get_status_code(char const* header);
+		std::size_t get_payload_length(char const* header);
+		RequestType get_request_type(char const* header);
+		StatusCode get_status_code(char const* header);
 
-		static void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0);
-		static void	insert_header(void* dst, StatusCode code, const uint16_t payload_length = 0);
-		static void	insert_payload(void *dst, void const* src, std::size_t src_len);
-	private:
-		static inline std::size_t get_offset_to_payload_length_field() { return Default::_offset_to_payload_length_field; }
+		void insert_header(void* dst, RequestType type, const uint16_t payload_length = 0);
+		void insert_header(void* dst, StatusCode code, const uint16_t payload_length = 0);
+		void insert_payload(void *dst, void const* src, std::size_t src_len);
 
-		static const std::size_t _header_length{8};
-		static const std::size_t _offset_to_payload_length_field{4};
-	};
+		static const std::size_t header_len{8};
+	} // namespace Default
 
 } // namespace protocol

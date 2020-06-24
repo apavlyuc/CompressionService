@@ -20,7 +20,5 @@ private:
 
 	void _client_session(socket_shared_ptr sock);
 
-	protocol::Default _m_protocol;
-
 	boost::asio::io_service _m_io_context;
 };

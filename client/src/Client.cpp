@@ -48,10 +48,9 @@ std::string Client::receive_msg()
 
 void Client::_perform_request(protocol::Default::RequestType type, std::string const& payload)
 {
-	const std::size_t header_len = protocol::Default::get_header_length();
 	const std::size_t payload_len = payload.size();
 
-	const std::size_t msg_size = header_len + payload_len;
+	const std::size_t msg_size = protocol::Default::header_len + payload_len;
 	char *msg = new char[msg_size];
 
 	protocol::Default::insert_header((void *)msg, type, payload_len);
@@ -71,14 +70,13 @@ std::string Client::_get_server_responce()
 {
 	std::string ret;
 
-	const std::size_t header_len = protocol::Default::get_header_length();
-	std::size_t payload_len = 0;
-
 	char *header = nullptr;
+	
 	char *payload = nullptr;
+	std::size_t payload_len = 0;
 	try {
-		header = new char[header_len];
-		boost::asio::read(_m_sock, boost::asio::buffer(header, header_len));
+		header = new char[protocol::Default::header_len];
+		boost::asio::read(_m_sock, boost::asio::buffer(header, protocol::Default::header_len));
 
 		payload_len = protocol::Default::get_payload_length(header);
 		std::cout << "payload_len: " << payload_len << std::endl;
