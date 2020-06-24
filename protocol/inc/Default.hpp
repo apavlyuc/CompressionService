@@ -25,11 +25,21 @@ namespace protocol {
 			compress = 4
 		};
 
+		enum class StatusCode
+		{
+			ok = 0,
+			unknown_error = 1,
+			message__too_large = 2,
+			unsupported_request_type = 3
+		};
+
 		inline std::size_t get_header_length() const { return Default::_header_length; }
 		std::size_t get_payload_length(char const* header) const;
 		RequestType get_request_type(char const* header) const;
+		StatusCode get_status_code(char const* header) const;
 
 		void	insert_header(void* dst, RequestType type, const uint16_t payload_length = 0) const;
+		void	insert_header(void* dst, StatusCode code, const uint16_t payload_length = 0) const;
 		void	insert_payload(void *dst, void const* src, std::size_t src_len) const;
 	protected:
 		inline std::size_t get_offset_to_payload_length_field() const { return Default::_offset_to_payload_length_field; }

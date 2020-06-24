@@ -21,6 +21,15 @@ namespace protocol {
 		return static_cast<Default::RequestType>(request_type);
 	}
 
+	Default::StatusCode Default::get_status_code(char const* header) const
+	{
+		uint16_t status_code = 0;
+
+		std::memcpy((void *)&status_code, (void const *)(header + 6), sizeof(status_code));
+
+		return static_cast<Default::StatusCode>(status_code);
+	}
+
 	void	Default::insert_header(void* dst, RequestType type, const uint16_t payload_length) const
 	{
 		const uint32_t magic_value = 0x53545259;
@@ -29,6 +38,16 @@ namespace protocol {
 		std::memcpy(dst, (void const *)&magic_value, sizeof(magic_value));
 		std::memcpy((void *)((char *)dst + 4), (void const *)&payload_length, sizeof(payload_length));
 		std::memcpy((void *)((char *)dst + 6), (void const *)&request_code, sizeof(request_code));
+	}
+
+	void	Default::insert_header(void* dst, StatusCode code, const uint16_t payload_length) const
+	{
+		const uint32_t magic_value = 0x53545259;
+		const uint16_t status_code = static_cast<uint16_t>(code);
+
+		std::memcpy(dst, (void const *)&magic_value, sizeof(magic_value));
+		std::memcpy((void *)((char *)dst + 4), (void const *)&payload_length, sizeof(payload_length));
+		std::memcpy((void *)((char *)dst + 6), (void const *)&status_code, sizeof(status_code));
 	}
 
 	void	Default::insert_payload(void *dst, void const* src, std::size_t src_len) const
