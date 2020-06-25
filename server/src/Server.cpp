@@ -1,4 +1,5 @@
 #include <Server.hpp>
+#include <Compressors.hpp>
 
 #include <boost/thread.hpp>
 
@@ -62,11 +63,20 @@ void Server::_client_session(socket_shared_ptr sock)
 				case protocol::Default::RequestType::compress:
 				{
 					std::cout << "compress" << std::endl;
-					std::size_t new_payload_len = payload_length;
+					payload = new char[payload_length];
+					boost::asio::read(*sock, boost::asio::buffer(payload, payload_length));
 
-					payload = new char[new_payload_len];
-					boost::asio::read(*sock, boost::asio::buffer(payload, new_payload_len));
-					_handle_compress_responce(sock, payload, new_payload_len);
+					std::string compressed_payload;
+					try {
+						compressed_payload = compressors::default_compress(payload, payload_length);
+					} catch (std::exception const& e)
+					{
+						_send_responce(sock, protocol::Default::StatusCode::unknown_error);
+						break;
+					}
+					std::size_t new_payload_len = compressed_payload.size();
+
+					_handle_compress_responce(sock, compressed_payload.c_str(), new_payload_len);
 
 					stats.m_total_bytes_to_compress += payload_length;
 					stats.m_total_bytes_after_compress += new_payload_len;
