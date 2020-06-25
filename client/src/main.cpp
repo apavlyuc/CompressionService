@@ -49,7 +49,14 @@ namespace {
 			{
 				client.send_get_stats_request();
 				answer_from_server = client.receive_msg();
-				break;
+
+				char const* data = answer_from_server.data();
+
+				std::cout << "bytes received: " << *((uint32_t const*)data) << std::endl;
+				std::cout << "bytes send: " << (uint32_t)*((uint32_t *)data + 1) << std::endl;
+				std::cout << "ratio: " << (int)(data[answer_from_server.size() - 1]) << std::endl;
+
+				return;
 			}
 			case 3:
 			{
