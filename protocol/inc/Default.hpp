@@ -26,7 +26,7 @@ namespace protocol {
 		{
 			ok = 0,
 			unknown_error = 1,
-			message__too_large = 2,
+			message_too_large = 2,
 			unsupported_request_type = 3
 		};
 
