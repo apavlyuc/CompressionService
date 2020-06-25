@@ -39,6 +39,17 @@ void Server::_client_session(socket_shared_ptr sock)
 			const protocol::Default::RequestType type = protocol::Default::get_request_type(header);
 			const std::size_t payload_length = protocol::Default::get_payload_length(header);
 
+			if (payload_length >= 1000)
+			{
+				std::cout << "message_too_large" << std::endl;
+				_send_responce(sock, protocol::Default::StatusCode::message_too_large);
+
+				delete[] header;
+				header = nullptr;
+
+				continue;
+			}
+
 			switch (type)
 			{
 				case protocol::Default::RequestType::compress:
