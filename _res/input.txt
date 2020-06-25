@@ -1,1 +1,10 @@
 this is some text to compress
+a
+aa
+aaa
+aaaaabbb
+aaaaabbbbbbaaabb
+abcdefg
+aaaccddddhhhhi
+123
+abCD
