@@ -100,6 +100,7 @@ void Server::_client_session(socket_shared_ptr sock)
 	} catch (std::exception const& e)
 	{
 		std::cerr << e.what() << std::endl;
+		_send_responce(sock, protocol::Default::StatusCode::unknown_error);
 	}
 }
 
