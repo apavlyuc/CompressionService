@@ -26,7 +26,8 @@ void Server::listen(boost::asio::ip::tcp::endpoint const& addr)
 
 void Server::_client_session(socket_shared_ptr sock)
 {
-	std::size_t msg_compressed_count = 0;
+	Stats stats;
+	stats.reset();
 
 	char *header = nullptr;
 	char *payload = nullptr;
@@ -36,8 +37,12 @@ void Server::_client_session(socket_shared_ptr sock)
 			header = new char[protocol::Default::header_len];
 			boost::asio::read(*sock, boost::asio::buffer(header, protocol::Default::header_len));
 
+			stats.m_total_msgs_received++;
+
 			const protocol::Default::RequestType type = protocol::Default::get_request_type(header);
 			const std::size_t payload_length = protocol::Default::get_payload_length(header);
+
+			stats.m_total_payload_bytes_received += payload_length;
 
 			if (payload_length >= 1000)
 			{
@@ -47,6 +52,8 @@ void Server::_client_session(socket_shared_ptr sock)
 				delete[] header;
 				header = nullptr;
 
+				stats.m_total_msgs_send++;
+
 				continue;
 			}
 
@@ -55,10 +62,16 @@ void Server::_client_session(socket_shared_ptr sock)
 				case protocol::Default::RequestType::compress:
 				{
 					std::cout << "compress" << std::endl;
-					payload = new char[payload_length];
-					boost::asio::read(*sock, boost::asio::buffer(payload, payload_length));
-					++msg_compressed_count;
-					_handle_compress_responce(sock, payload, payload_length);
+					std::size_t new_payload_len = payload_length;
+
+					payload = new char[new_payload_len];
+					boost::asio::read(*sock, boost::asio::buffer(payload, new_payload_len));
+					_handle_compress_responce(sock, payload, new_payload_len);
+
+					stats.m_total_bytes_to_compress += payload_length;
+					stats.m_total_bytes_after_compress += new_payload_len;
+
+					stats.m_total_payload_bytes_send += new_payload_len;
 					break;
 				}
 
@@ -72,14 +85,14 @@ void Server::_client_session(socket_shared_ptr sock)
 				case protocol::Default::RequestType::get_stats:
 				{
 					std::cout << "get_stats" << std::endl;
-					_handle_get_stats_responce(sock, msg_compressed_count);
+					_handle_get_stats_responce(sock, stats);
 					break;
 				}
 
 				case protocol::Default::RequestType::reset_stats:
 				{
 					std::cout << "reset_stats" << std::endl;
-					msg_compressed_count = 0;
+					stats.reset();
 					_handle_reset_stats_responce(sock);
 					break;
 				}
@@ -91,6 +104,8 @@ void Server::_client_session(socket_shared_ptr sock)
 				}
 			}
 
+			stats.m_total_msgs_send++;
+
 			delete[] header;
 			header = nullptr;
 
@@ -100,7 +115,7 @@ void Server::_client_session(socket_shared_ptr sock)
 	} catch (std::exception const& e)
 	{
 		std::cerr << e.what() << std::endl;
-		_send_responce(sock, protocol::Default::StatusCode::unknown_error);
+		//_send_responce(sock, protocol::Default::StatusCode::unknown_error);
 	}
 }
 
@@ -116,10 +131,30 @@ void Server::_handle_ping_responce(socket_shared_ptr sock)
 	_send_responce(sock, protocol::Default::StatusCode::ok);
 }
 
-void Server::_handle_get_stats_responce(socket_shared_ptr sock, std::size_t stats)
+void Server::_handle_get_stats_responce(socket_shared_ptr sock, Stats const& stats)
 {
-	std::string payload = std::to_string(stats);
-	_send_responce(sock, protocol::Default::StatusCode::ok, payload.c_str(), payload.size());
+	const std::size_t payload_len = 9; // uint_32t + uint32_t + uint8_t
+	uint8_t *payload = new uint8_t[payload_len];
+	std::memset(payload, 0, payload_len);
+
+	uint8_t compression_ratio = 0;
+	if (stats.m_total_bytes_after_compress)
+	{
+		compression_ratio = static_cast<uint8_t>(stats.m_total_bytes_to_compress / stats.m_total_bytes_after_compress);
+	}
+	else
+	{
+		compression_ratio = 0;
+	}
+	
+
+	std::memcpy((void *)payload, (void const *)&stats.m_total_payload_bytes_received, 4);
+	std::memcpy((void *)(payload + 4), (void const *)&stats.m_total_payload_bytes_send, 4);
+	std::memcpy((void *)(payload + 8), (void const *)&compression_ratio, 1);
+
+	_send_responce(sock, protocol::Default::StatusCode::ok, (char const *)payload, payload_len);
+
+	delete[] payload;
 }
 
 void Server::_handle_reset_stats_responce(socket_shared_ptr sock)
