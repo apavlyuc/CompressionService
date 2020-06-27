@@ -66,22 +66,7 @@ void Server::_client_session(socket_shared_ptr sock)
 					payload = new char[payload_length];
 					boost::asio::read(*sock, boost::asio::buffer(payload, payload_length));
 
-					std::string compressed_payload;
-					try {
-						compressed_payload = compressors::default_compress(payload, payload_length);
-					} catch (std::exception const& e)
-					{
-						_send_responce(sock, protocol::Default::StatusCode::unknown_error);
-						break;
-					}
-					std::size_t new_payload_len = compressed_payload.size();
-
-					_handle_compress_responce(sock, compressed_payload.c_str(), new_payload_len);
-
-					stats.m_total_bytes_to_compress += payload_length;
-					stats.m_total_bytes_after_compress += new_payload_len;
-
-					stats.m_total_payload_bytes_send += new_payload_len;
+					_handle_compress_responce(sock, payload, payload_length, stats);
 					break;
 				}
 
@@ -129,11 +114,23 @@ void Server::_client_session(socket_shared_ptr sock)
 	}
 }
 
-void Server::_handle_compress_responce(socket_shared_ptr sock, char const* text_to_compress, std::size_t text_len)
+void Server::_handle_compress_responce(socket_shared_ptr sock, char const* text_to_compress, std::size_t text_len, Stats& stats)
 {
-	std::string compressed_text = "Compressed[" + std::string(text_to_compress, text_len) + "]";
-	std::cout << "compressed_text: " << compressed_text << std::endl;
-	_send_responce(sock, protocol::Default::StatusCode::ok, compressed_text.c_str(), compressed_text.size());
+	std::string compressed_payload;
+	try {
+		compressed_payload = compressors::default_compress(text_to_compress, text_len);
+	} catch (std::exception const& e)
+	{
+		_send_responce(sock, protocol::Default::StatusCode::unknown_error);
+	}
+	std::size_t compressed_payload_len = compressed_payload.size();
+	std::cout << "compressed_payload: " << compressed_payload << std::endl;
+	_send_responce(sock, protocol::Default::StatusCode::ok, compressed_payload.c_str(), compressed_payload.size());
+
+	stats.m_total_bytes_to_compress += text_len;
+	stats.m_total_bytes_after_compress += compressed_payload_len;
+
+	stats.m_total_payload_bytes_send += compressed_payload_len;
 }
 
 void Server::_handle_ping_responce(socket_shared_ptr sock)

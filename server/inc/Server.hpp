@@ -35,7 +35,7 @@ public:
 
 	void listen(boost::asio::ip::tcp::endpoint const& addr);
 private:
-	void _handle_compress_responce(socket_shared_ptr sock, char const* text_to_compress, std::size_t text_len);
+	void _handle_compress_responce(socket_shared_ptr sock, char const* text_to_compress, std::size_t text_len, Stats& stats);
 	void _handle_ping_responce(socket_shared_ptr sock);
 	void _handle_get_stats_responce(socket_shared_ptr sock, Stats const& stats);
 	void _handle_reset_stats_responce(socket_shared_ptr sock);
