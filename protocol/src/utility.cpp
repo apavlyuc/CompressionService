@@ -3,9 +3,11 @@
 namespace protocol {
 	bool is_big_endian_machine()
 	{
-		static const int i = 1;
+		union {
+			uint32_t i;
+			char c[4];
+		} tmp = {0x01020304};
 
-		char *ptr = (char *)&i;
-		return (*ptr == 0);
+		return (tmp.c[0] == 1);
 	}
 } // namespace protocol

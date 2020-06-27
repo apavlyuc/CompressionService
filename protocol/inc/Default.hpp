@@ -34,8 +34,8 @@ namespace protocol {
 		RequestType get_request_type(char const* header);
 		StatusCode get_status_code(char const* header);
 
-		void insert_header(void* dst, RequestType type, const uint16_t payload_length = 0);
-		void insert_header(void* dst, StatusCode code, const uint16_t payload_length = 0);
+		void insert_header(void* dst, RequestType type, uint16_t payload_length = 0);
+		void insert_header(void* dst, StatusCode code, uint16_t payload_length = 0);
 		void insert_payload(void *dst, void const* src, std::size_t src_len);
 
 		static const std::size_t header_len{8};
