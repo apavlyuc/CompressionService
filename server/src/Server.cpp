@@ -87,8 +87,7 @@ void Server::_client_session(socket_shared_ptr sock)
 				case protocol::Default::RequestType::reset_stats:
 				{
 					std::cout << "reset_stats" << std::endl;
-					stats.reset();
-					_handle_reset_stats_responce(sock);
+					_handle_reset_stats_responce(sock, stats);
 					break;
 				}
 
@@ -164,8 +163,9 @@ void Server::_handle_get_stats_responce(socket_shared_ptr sock, Stats const& sta
 	delete[] payload;
 }
 
-void Server::_handle_reset_stats_responce(socket_shared_ptr sock)
+void Server::_handle_reset_stats_responce(socket_shared_ptr sock, Stats& stats)
 {
+	stats.reset();
 	_send_responce(sock, protocol::Default::StatusCode::ok);
 }
 
