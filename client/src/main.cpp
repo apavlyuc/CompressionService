@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include <Client.hpp>
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
@@ -20,11 +20,6 @@ namespace {
 		{
 			return;
 		}
-
-		if (ac == 2 && g_modes.count(av[1]))
-		{
-			return;
-		}
 		if (ac == 3 && std::string(av[1]) == "-f")
 		{
 			return;
@@ -35,20 +30,18 @@ namespace {
 
 	void control_request_mode(Client& client, uint8_t id)
 	{
-		std::string answer_from_server;
-
 		switch (id)
 		{
 			case 1:
 			{
 				client.send_ping_request();
-				answer_from_server = client.receive_msg();
+				client.receive_msg();
 				break;
 			}
 			case 2:
 			{
 				client.send_get_stats_request();
-				answer_from_server = client.receive_msg();
+				std::string answer_from_server = client.receive_msg();
 
 				char const* data = answer_from_server.data();
 
@@ -56,12 +49,12 @@ namespace {
 				std::cout << "bytes send: " << (uint32_t)*((uint32_t *)data + 1) << std::endl;
 				std::cout << "ratio: " << (int)(data[answer_from_server.size() - 1]) << std::endl;
 
-				return;
+				break;
 			}
 			case 3:
 			{
 				client.send_reset_stats_request();
-				answer_from_server = client.receive_msg();
+				client.receive_msg();
 				break;
 			}
 			default:
@@ -70,8 +63,6 @@ namespace {
 				return;
 			}
 		}
-
-		std::cout << "answer_from_server: " << answer_from_server << std::endl;
 	}
 
 	void compress_mode(Client& client, std::istream& is)
@@ -86,10 +77,24 @@ namespace {
 					continue;
 				}
 
+				if (line[0] == '-')
+				{
+					try {
+						control_request_mode(client, g_modes.at(line.substr(1)));
+					} catch (std::exception const& e)
+					{
+						std::cerr << "exception: unknown request." << std::endl;
+					}
+					continue;
+				}
+
 				client.send_compress_request(line);
 				answer_from_server = client.receive_msg();
 
-				std::cout << "server answer: [" << answer_from_server << "]" << std::endl;
+				if (!answer_from_server.empty())
+				{
+					std::cout << "server answer: [" << answer_from_server << "]" << std::endl;
+				}
 			}
 		} catch (std::exception const& e)
 		{
@@ -114,10 +119,6 @@ int		main(int ac, char **av)
 	if (ac == 1)
 	{
 		compress_mode(client, std::cin);
-	}
-	else if (ac == 2)
-	{
-		control_request_mode(client, g_modes.at(av[1]));
 	}
 	else
 	{
