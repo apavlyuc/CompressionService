@@ -27,7 +27,9 @@ namespace protocol {
 			ok = 0,
 			unknown_error = 1,
 			message_too_large = 2,
-			unsupported_request_type = 3
+			unsupported_request_type = 3,
+			message_contains_digits = 4,
+			message_contains_uppercase = 5
 		};
 
 		std::size_t get_payload_length(char const* header);
