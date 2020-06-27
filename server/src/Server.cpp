@@ -28,7 +28,6 @@ void Server::listen(boost::asio::ip::tcp::endpoint const& addr)
 void Server::_client_session(socket_shared_ptr sock)
 {
 	Stats stats;
-	stats.reset();
 
 	char *header = nullptr;
 	char *payload = nullptr;
@@ -43,9 +42,7 @@ void Server::_client_session(socket_shared_ptr sock)
 			const protocol::Default::RequestType type = protocol::Default::get_request_type(header);
 			const std::size_t payload_length = protocol::Default::get_payload_length(header);
 
-			stats.m_total_payload_bytes_received += payload_length;
-
-			if (payload_length >= 1000)
+			if (payload_length >= Server::_max_payload_len)
 			{
 				std::cout << "message_too_large" << std::endl;
 				_send_responce(sock, protocol::Default::StatusCode::message_too_large);
@@ -108,28 +105,40 @@ void Server::_client_session(socket_shared_ptr sock)
 		}
 	} catch (std::exception const& e)
 	{
+		delete[] header;
+		delete[] payload;
+
 		std::cerr << e.what() << std::endl;
-		//_send_responce(sock, protocol::Default::StatusCode::unknown_error);
 	}
 }
 
 void Server::_handle_compress_responce(socket_shared_ptr sock, char const* text_to_compress, std::size_t text_len, Stats& stats)
 {
-	std::string compressed_payload;
+	stats.m_total_payload_bytes_received += text_len;
+	stats.m_total_bytes_to_compress += text_len;
+
 	try {
-		compressed_payload = compressors::default_compress(text_to_compress, text_len);
+		std::string compressed_payload = compressors::default_compress(text_to_compress, text_len);
+		const std::size_t compressed_payload_len = compressed_payload.size();
+
+		std::cout << "compressed_payload: " << compressed_payload << std::endl;
+		_send_responce(sock, protocol::Default::StatusCode::ok, compressed_payload.c_str(), compressed_payload_len);
+
+		stats.m_total_bytes_after_compress += compressed_payload_len;
+		stats.m_total_payload_bytes_send += compressed_payload_len;
+	} catch (compressors::digits_in_text const& e)
+	{
+		std::cerr << "Exception: message_contains_digits." << std::endl;
+		_send_responce(sock, protocol::Default::StatusCode::message_contains_digits);
+	} catch (compressors::uppercase_in_text const& e)
+	{
+		std::cerr << "Exception: message_contains_uppercase." << std::endl;
+		_send_responce(sock, protocol::Default::StatusCode::message_contains_uppercase);
 	} catch (std::exception const& e)
 	{
+		std::cerr << "Exception: unknown. " << e.what() << std::endl;
 		_send_responce(sock, protocol::Default::StatusCode::unknown_error);
 	}
-	std::size_t compressed_payload_len = compressed_payload.size();
-	std::cout << "compressed_payload: " << compressed_payload << std::endl;
-	_send_responce(sock, protocol::Default::StatusCode::ok, compressed_payload.c_str(), compressed_payload.size());
-
-	stats.m_total_bytes_to_compress += text_len;
-	stats.m_total_bytes_after_compress += compressed_payload_len;
-
-	stats.m_total_payload_bytes_send += compressed_payload_len;
 }
 
 void Server::_handle_ping_responce(socket_shared_ptr sock)
@@ -141,7 +150,6 @@ void Server::_handle_get_stats_responce(socket_shared_ptr sock, Stats const& sta
 {
 	const std::size_t payload_len = 9; // uint_32t + uint32_t + uint8_t
 	uint8_t *payload = new uint8_t[payload_len];
-	std::memset(payload, 0, payload_len);
 
 	uint8_t compression_ratio = 0;
 	if (stats.m_total_bytes_after_compress)
@@ -152,10 +160,12 @@ void Server::_handle_get_stats_responce(socket_shared_ptr sock, Stats const& sta
 	{
 		compression_ratio = 0;
 	}
-	
 
-	std::memcpy((void *)payload, (void const *)&stats.m_total_payload_bytes_received, 4);
-	std::memcpy((void *)(payload + 4), (void const *)&stats.m_total_payload_bytes_send, 4);
+	const std::uint32_t total_bytes_received = stats.m_total_payload_bytes_received + stats.m_total_msgs_received * protocol::Default::header_len;
+	const std::uint32_t total_bytes_send = stats.m_total_payload_bytes_send + stats.m_total_msgs_send * protocol::Default::header_len;
+
+	std::memcpy((void *)payload, (void const *)&total_bytes_received, 4);
+	std::memcpy((void *)(payload + 4), (void const *)&total_bytes_send, 4);
 	std::memcpy((void *)(payload + 8), (void const *)&compression_ratio, 1);
 
 	_send_responce(sock, protocol::Default::StatusCode::ok, (char const *)payload, payload_len);
@@ -166,6 +176,7 @@ void Server::_handle_get_stats_responce(socket_shared_ptr sock, Stats const& sta
 void Server::_handle_reset_stats_responce(socket_shared_ptr sock, Stats& stats)
 {
 	stats.reset();
+
 	_send_responce(sock, protocol::Default::StatusCode::ok);
 }
 

@@ -44,5 +44,7 @@ private:
 
 	void _client_session(socket_shared_ptr sock);
 
+	static const std::size_t _max_payload_len{16384};
+
 	boost::asio::io_service _m_io_context;
 };

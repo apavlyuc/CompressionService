@@ -19,12 +19,12 @@ namespace compressors {
 			{
 				if (is_digit(text[i]))
 				{
-					throw std::runtime_error("text contain's digits");
+					throw digits_in_text();
 				}
 
 				if (is_uppercase(text[i]))
 				{
-					throw std::runtime_error("text contain's uppercase");
+					throw uppercase_in_text();
 				}
 			}
 		}
