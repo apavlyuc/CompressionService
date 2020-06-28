@@ -1,6 +1,6 @@
 # CompressionService
-I found this test task in stored files on my PC.. and decided to do it :D
-see _res/subject.pdf for more info and requirements to this project.
+I found this test task in stored files on my PC.. and decided to do it :D.
+See _res/subject.pdf for more info and requirements to this project.
 
 ## **Target spec.**
 - **OS:** Windows 10
