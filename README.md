@@ -1,6 +1,6 @@
 # CompressionService
-### I found this test task in stored files on my PC.. and decided to do it :D
-### see _res/subject.pdf for more info and requirements to this project.
+I found this test task in stored files on my PC.. and decided to do it :D
+see _res/subject.pdf for more info and requirements to this project.
 
 ## **Target spec.**
 **OS:** Windows 10
@@ -15,9 +15,9 @@ Client(client/) - just for tests.
 Purpose of this project is to compress data(ASCI text) received from the cliend over TCP socket, and send data back.
 
 Compress algo:
-a -> a
-aa -> aa
-aaa -> 3a
-abc -> abc
-ab2 -> error, contains digits.
-aBc -> error, contains uppercase.
+- a -> a
+- aa -> aa
+- aaa -> 3a
+- abc -> abc
+- ab2 -> error, contains digits.
+- aBc -> error, contains uppercase.
