@@ -3,8 +3,9 @@ I found this test task in stored files on my PC.. and decided to do it :D
 see _res/subject.pdf for more info and requirements to this project.
 
 ## **Target spec.**
-**OS:** Windows 10
-**Language:** C++17 under g++ 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)
+- **OS:** Windows 10
+- **Language:** C++17 under g++ 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)
+- **Build system:** CMake 3.16
 
 ## **Dependencies.**
 Boost library 1.73
