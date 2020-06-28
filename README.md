@@ -22,3 +22,8 @@ Compress algo:
 - abc -> abc
 - ab2 -> error, contains digits.
 - aBc -> error, contains uppercase.
+
+## **TODO**
+- make cross-platform.(windows + linux).
+- update cmake to build using msvc under windows and g++ under linux.
+- speed up by replacing dynamic memory allocation with stack.
